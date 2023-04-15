@@ -7,7 +7,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
-import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.w3c.dom.*;
@@ -20,36 +20,60 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class Main {
     public static void main(String[] args) {
 
         String[] columnMapping = {"id", "firstName", "lastName", "country", "age"};
         String fileName = "data.csv";
+        //test
         List<Employee> listCsv = parseCSV(columnMapping, fileName);
         String jsonCsv = listToJson(listCsv);
         writeString(jsonCsv, "data.json");
 
+        //test
         List<Employee> listXml = parseXML("data.xml");
         String jsonXml = listToJson(listXml);
         writeString(jsonXml, "data2.json");
 
-//        String json = readString("new_data.json");
+        //test
+        String json = readString("new_data.json");
+        //test
+        List<Employee> list = jsonToList(json);
+        for (Employee employee : list) {
+            System.out.println(employee);
+        }
     }
 
-//    public static String readString(String s) {
-//        String json = null;
-//        JSONParser parser = new JSONParser();
-//        try (BufferedReader br = new BufferedReader(new FileReader(s))) {
-//            Object obj = parser.parse(br);
-//            JSONObject jsonObject = (JSONObject) obj;
-//            json = jsonObject.toString();
-//        } catch (IOException | ParseException e) {
-//            System.out.println(e.getMessage());
-//        }
-//        return json;
-//    }
+    public static List<Employee> jsonToList(String json) {
+        List<Employee> list = new ArrayList<>();
+        JSONParser parser = new JSONParser();
+        try {
+            Object obj = parser.parse(json);
+            JSONArray array = (JSONArray) obj;
+            GsonBuilder builder = new GsonBuilder();
+            Gson gson = builder.create();
+            for (Object employee : array) {
+                list.add(gson.fromJson(employee.toString(), Employee.class));
+            }
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+        }
+        return list;
+    }
+
+    public static String readString(String s) {
+        StringBuilder json = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader(s))) {
+            String str;
+            while ((str = br.readLine()) != null) {
+                json.append(str);
+            }
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+        return json.toString();
+    }
 
     public static List<Employee> parseXML(String s) {
         List<Employee> employeeList = new ArrayList<>();
@@ -58,12 +82,10 @@ public class Main {
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(new File(s));
             Node root = doc.getDocumentElement();
-//            System.out.println("Корневой элемент: " + root.getNodeName());
             NodeList nodeList = root.getChildNodes();
             for (int i = 0; i < nodeList.getLength(); i++) {
                 Node node = nodeList.item(i);
                 if (Node.ELEMENT_NODE == node.getNodeType()) {
-//                    System.out.println("Текущий узел: " + node.getNodeName());
                     NodeList employeeParameters = node.getChildNodes();
                     String[] parameters = new String[employeeParameters.getLength()];
                     int count = 0;
@@ -71,7 +93,6 @@ public class Main {
                         Node node_ = employeeParameters.item(a);
                         if (Node.ELEMENT_NODE == node_.getNodeType()) {
                             parameters[count] = node_.getFirstChild().getNodeValue();
-//                            System.out.println(parameters[count]);
                             count++;
                         }
                     }
